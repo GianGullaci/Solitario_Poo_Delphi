@@ -1,0 +1,126 @@
+unit Form_Menu_Solitario;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, StdCtrls, LO_Solitario;
+
+type
+  TFMenuSolitario = class(TForm)
+    BNuevaPartida: TButton;
+    BContinuarPartida: TButton;
+    BSalir: TButton;
+    Label1: TLabel;         
+    procedure FormCreate(Sender: TObject);
+    procedure BSalirClick(Sender: TObject);
+    procedure BNuevaPartidaClick(Sender: TObject);
+    procedure BContinuarPartidaClick(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  FMenuSolitario: TFMenuSolitario;
+  oJuego_Solitario: oTipo_Solitario;
+
+implementation
+
+uses Form_Juego_Solitario;
+
+{$R *.dfm}
+
+procedure TFMenuSolitario.FormCreate(Sender: TObject);
+begin
+  oJuego_Solitario:= oTipo_Solitario.Create;
+  oJuego_Solitario.Crear;
+end;
+
+procedure TFMenuSolitario.BSalirClick(Sender: TObject);
+begin     
+  oJuego_Solitario.Cerrar;
+  Application.Terminate;
+end;
+
+procedure TFMenuSolitario.BNuevaPartidaClick(Sender: TObject);   
+var
+  Limite_Resp: string;
+  Limite: Integer;
+  respuesta: boolean;
+begin
+  if FJuegoSolitario = nil then
+    FJuegoSolitario := TFJuegoSolitario.Create(Self);
+
+
+  respuesta:= InputQuery('Cartas por color', 'Ingrese la cantidad de cartas por color', Limite_Resp);
+
+  if respuesta and TryStrToInt(Limite_Resp,Limite) then
+   begin
+    if (Limite > 0) and (Limite <= 12) then
+      begin
+        oJuego_Solitario.Nueva_Partida(Limite);
+        oJuego_Solitario.Crear;
+        oJuego_Solitario.Mostrar_Mazo(FJuegoSolitario.SGMazo);
+        FJuegoSolitario.oJuego_Solitario:= oJuego_Solitario;
+        FJuegoSolitario.nueva:= true;
+        FJuegoSolitario.Show;
+        FMenuSolitario.Visible:= false;
+      end
+    else
+      showmessage('Debe ingresar un limite de cartas para jugar entre 1 y 12');
+   end
+  else
+    if respuesta then
+      showmessage('Debe ingresar un limite de cartas para jugar entre 1 y 12');
+
+end;
+
+procedure TFMenuSolitario.BContinuarPartidaClick(Sender: TObject);
+var
+  RI_Prim, RI_Ult: Tipo_Reg_Indice;
+  Carta_Prim, Carta_Ult: Tipo_Una_Carta;
+begin          
+  if FJuegoSolitario = nil then
+    FJuegoSolitario := TFJuegoSolitario.Create(Self);
+
+  if not oJuego_Solitario.Juego_Finalizado then
+    begin
+      FMenuSolitario.Visible:= false;
+      FJuegoSolitario.oJuego_Solitario:= oJuego_Solitario;
+       
+      if (oJuego_Solitario.Mazo.Ultimo <> oJuego_Solitario.Mazo.Pos_Nula)
+            and (oJuego_Solitario.Mazo.Primero <> oJuego_Solitario.Mazo.Pos_Nula) then
+        begin
+          oJuego_Solitario.Mazo.Capturar(RI_Prim,oJuego_Solitario.Mazo.Primero);
+          oJuego_Solitario.Mazo.Capturar(RI_Ult,oJuego_Solitario.Mazo.Ultimo);
+          oJuego_Solitario.Cartas.Capturar(Carta_Prim,RI_Prim.Pos);
+          oJuego_Solitario.Cartas.Capturar(Carta_Ult,RI_Ult.Pos);
+          if (Carta_Prim.Palo = 'Oro') and (Carta_Prim.Num = 1)
+                and (Carta_Ult.Palo = 'Espada') and (Carta_Ult.Num = ((RI_Ult.Pos + 1) div 4)) then
+            begin
+              oJuego_Solitario.Mazo.Mezclar((RI_Ult.Pos + 1) div 4);
+              oJuego_Solitario.Mazo.Cortar((RI_Ult.Pos + 1) div 4);
+              oJuego_Solitario.Mostrar_Mazo(FJuegoSolitario.SGMazo);
+              FJuegoSolitario.nueva:= False;
+              FJuegoSolitario.Show;
+              FJuegoSolitario.BMezclar.Enabled:= false;
+              FJuegoSolitario.BCorte.Enabled:= false;
+            end
+          else
+            begin
+              if oJuego_Solitario.Mazo.Ultimo <> oJuego_Solitario.Mazo.Pos_Nula then
+                oJuego_Solitario.Mostrar_Mazo(FJuegoSolitario.SGMazo);
+              FJuegoSolitario.nueva:= False;
+              FJuegoSolitario.Show;
+              FJuegoSolitario.BMezclar.Enabled:= false;
+              FJuegoSolitario.BCorte.Enabled:= false;
+            end;
+        end;
+    end
+  else
+    Showmessage('No tiene ninguna partida para continuar, debe comenzar una nueva');
+end;
+
+end.
